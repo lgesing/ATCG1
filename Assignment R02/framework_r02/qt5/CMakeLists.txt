@@ -1,0 +1,19 @@
+cmake_minimum_required(VERSION 2.8)
+
+PROJECT(atcg)
+FIND_PACKAGE(Qt5 REQUIRED)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+
+file(GLOB atcg_SOURCES "*.cpp")
+file(GLOB atcg_HEADERS "*.h")
+
+QT4_WRAP_CPP(atcg_HEADERS_MOC ${atcg_HEADERS})
+
+INCLUDE(${QT_USE_FILE})
+ADD_DEFINITIONS(${QT_DEFINITIONS})
+
+ADD_EXECUTABLE(atcg ${atcg_SOURCES}
+      ${atcg_HEADERS_MOC})
+TARGET_LINK_LIBRARIES(atcg ${QT_LIBRARIES})
