@@ -54,36 +54,41 @@ CSphere::Intersect(const CRay& clRay, RealType t0, RealType t1, TTracingContext&
 		pclShader  - Material of sphere
 	*/
 
-	CVectorT<RealType, 3> vecDiff(clRay.GetOrigin() - m_v3Center);
+    VectorType3 vecDiff(m_v3Center - clRay.GetOrigin());
 
-	RealType B = (2.0 * (clRay.GetDir() | vecDiff));
-	RealType C = (vecDiff | vecDiff) - m_rRadius * m_rRadius;
 
-	RealType desc = B * B - 4 * C;
+    RealType t_ca = vecDiff | clRay.GetDir();
 
-	if (desc < 0.0) {
-		return false;
-	}
+    if (t_ca < 0)
+        return false;
 
-	desc = sqrt(desc);
-	
-	RealType t;
-	t = (-B - desc) / 2.0;
-	
-	if (t < 0.0) {
-		t = ((-B + desc) / 2.0);
-	}
+    RealType d2 = (vecDiff | vecDiff) - t_ca * t_ca;
+    RealType r2 = m_rRadius * m_rRadius ;
 
-	if (t > tContext.t) {
-		return false;
-	}
+    if (d2 > r2) {
+        return false;
+    }
 
-	tContext.v3HitPoint = clRay.Evaluate(tContext.t);
-	tContext.v3Normal = (tContext.v3HitPoint - m_v3Center).normalize();
+    RealType desc = sqrt(r2 - d2);
 
-	tContext.pclShader = GetShader();
+    RealType t = (t_ca - desc) ;
 
-	return true;
+    if (t < 0.0) {
+        t = (t_ca + desc);
+    }
+
+    if (t > tContext.t) {
+        return false;
+    }
+    tContext.t = t;
+
+    tContext.v3HitPoint = clRay.Evaluate(tContext.t);
+    tContext.v3Normal = (tContext.v3HitPoint - m_v3Center).normalize();
+
+    tContext.pclShader = GetShader();
+
+    return true;
+
 }
 
 //=============================================================================
