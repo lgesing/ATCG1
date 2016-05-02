@@ -53,7 +53,7 @@ CPinholeCamera::GenerateRay(RealType x, RealType y, RealType rWidth, RealType rH
 	*/
 
 	// pixel size
-	RealType x_size = m_rRight / (rHeight / 2.0);
+	RealType x_size = m_rRight / (rWidth / 2.0);
 	RealType y_size = m_rTop / (rHeight / 2.0);
 
 	// center offset

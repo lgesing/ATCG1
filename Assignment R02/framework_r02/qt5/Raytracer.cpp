@@ -122,23 +122,35 @@ CWhitted::TraceRay(const CSurface*   pclScene,
 		Hint: You will need an instance of the structure TTracingContext, which contains all necessary arguments for tracing rays
 	*/
 	
-	TTracingContext stTTC;
-	stTTC.v3Outgoing = crclRay.GetDir();
-	ColorType cColor;
+	TTracingContext tContext;
+	tContext.v3Outgoing = crclRay.GetDir();
+	tContext.t = uiDepth;
+	ColorType cColor, colLocal, colRefracted(0), colReflected(0);
 	
 	// (i)
-	if (pclScene->Intersect(crclRay, 0, uiDepth, stTTC)) {
+	if (pclScene->Intersect(crclRay, 0, uiDepth, tContext)) {
 
 		// (ii)
-		cColor = Shade(pclScene, stTTC);
+		colLocal = Shade(pclScene, tContext);
 
 		// (iii)
+		if (tContext.pclShader->IsSpecular()) {
+			CRay clSpecRay;
+			clSpecRay = crclRay.ReflectedRay(tContext.v3HitPoint, tContext.v3Normal);
 
+			colReflected = TraceRay(pclScene, clSpecRay, uiDepth - tContext.t);
+		}
 
 		// (iv)
+		if (tContext.pclShader->IsRefractive()) {
+			CRay clTransRay;
+			bool ref = crclRay.RefractedRay(tContext.v3HitPoint, tContext.v3Normal, tContext.pclShader->GetRefractiveIndex(), clTransRay);
+
+			colRefracted = TraceRay(pclScene, clTransRay, uiDepth - tContext.t);
+		}
 
 		// (v)
-
+		cColor = colLocal + colReflected * tContext.pclShader->GetSpecularColor() + colRefracted * tContext.pclShader->GetRefractiveColor();
 	}
 	else {
 		// (vi)

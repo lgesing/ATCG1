@@ -22,7 +22,7 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QFileDialog>
 #include <QtGui/QMouseEvent>
-#include <QtGui/QHBoxLayout>
+#include <QHBoxLayout>
 #include <QImageReader>
 #include <QMessageBox>
 
