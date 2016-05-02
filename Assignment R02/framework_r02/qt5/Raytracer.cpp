@@ -43,7 +43,7 @@ CWhitted::Render(const CSurface*    pclScene,
 
 	int i_width = clQImage.width();
 	int i_height= clQImage.height();
-
+	
 	//correct aspect ratio
 	m_clPinholeCamera.SetAspectRatio(i_width/(RealType)i_height);
 
@@ -68,6 +68,30 @@ CWhitted::Render(const CSurface*    pclScene,
 					if ( pclQProgressDialog->wasCancelled() ) break;
 				}
 	*/
+
+	// for all pixels
+	for (int y = 0; y < i_height; y++) {
+		for (int x = 0; x < i_width; x++) {
+			// generate ray
+			CRay clRay = m_clPinholeCamera.GenerateRay(x, y, i_width, i_height);
+
+			// trace ray through scene and obtain color
+			clRay.SetPower(TraceRay(pclScene, clRay, uiMaxDepth));
+
+			// set color in clQImage
+			ColorType clColorType = clRay.GetPower();
+			clColorType.Clamp(0,255);
+			unsigned int uiColor = clColorType.GetPacked();
+			
+			clQImage.setPixel(x, y, uiColor);
+		}
+		if (pclQProgressDialog)
+		{
+			pclQProgressDialog->setValue(y);
+			qApp->processEvents();
+			if (pclQProgressDialog->wasCanceled()) break;
+		}
+	}
 
 }
 
@@ -97,8 +121,31 @@ CWhitted::TraceRay(const CSurface*   pclScene,
 
 		Hint: You will need an instance of the structure TTracingContext, which contains all necessary arguments for tracing rays
 	*/
+	
+	TTracingContext stTTC;
+	stTTC.v3Outgoing = crclRay.GetDir();
+	ColorType cColor;
+	
+	// (i)
+	if (pclScene->Intersect(crclRay, 0, uiDepth, stTTC)) {
 
-	return 0;
+		// (ii)
+		cColor = Shade(pclScene, stTTC);
+
+		// (iii)
+
+
+		// (iv)
+
+		// (v)
+
+	}
+	else {
+		// (vi)
+		
+		cColor = m_colBackground;
+	}
+	return cColor;
 
 }
 
@@ -134,6 +181,25 @@ CWhitted::Shade( const CSurface*   pclScene,
 
 	ColorType color(0);
 
+	color += tContext.pclShader->ShadeAmbient(m_colAmbient);
+	
+	CRay clRay;
+	clRay.SetOrigin(tContext.v3HitPoint);
+	RealType rRayDomain;
+	ColorType colIntensity;
+	TTracingContext tshadow;
+
+	for (LightListType::iterator it = m_LightList.begin(); it != m_LightList.end(); ++it) {
+		(*it)->ShadowFeeler(1000, clRay, rRayDomain, colIntensity);
+		
+		if (!pclScene->Intersect(clRay, 0, rRayDomain, tshadow)) {
+			tContext.v3Incoming = clRay.GetDir();
+			tContext.colLightIntensity = colIntensity;
+
+			color += tContext.pclShader->Shade(tContext);
+		}
+	}
+	
 	return color;
 }
 
