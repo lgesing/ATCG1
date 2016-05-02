@@ -52,7 +52,29 @@ CPinholeCamera::GenerateRay(RealType x, RealType y, RealType rWidth, RealType rH
 	the image on the image plane in the orthonormal basis.
 	*/
 
+	// pixel size
+	RealType x_size = m_rRight / (rHeight / 2.0);
+	RealType y_size = m_rTop / (rHeight / 2.0);
+
+	// center offset
+	RealType x_center = x_size / 2.0;
+	RealType y_center = y_size / 2.0;
+
+	// point in camera coordinate system
+	CVectorT<RealType, 3> v3Point;
+	v3Point[0] = x * x_size + x_center - m_rRight;
+	v3Point[1] = y * y_size + y_center - m_rTop;
+	v3Point[2] = m_rFocalLength;
+
+	// rotate to world coordinate system
+	CVectorT<RealType, 3> v3Point_w(m_m33ONB * v3Point + m_v3Eye);
+
+	// define ray
 	CRay ray;
+
+	ray.SetOrigin(m_v3Eye);
+	ray.SetDir((v3Point_w - m_v3Eye).normalize());
+
 	return ray;
 };
 
